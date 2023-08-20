@@ -39,9 +39,9 @@ type (
 type (
 	HeartClaims struct {
 		gorm.Model
-		ENC string `json:"enc" bson:"enc" gorm:"unique"`
+		Id string `json:"enc" bson:"enc" gorm:"unique"`
 		SHA string `json:"sha" bson:"sha" gorm:"unique"`
-		Id  string `json:"id"`
+		Roll  string `json:"roll"`
 	}
 )
 

@@ -4,6 +4,9 @@ import (
 	"github.com/Akhilstaar/me-my_encryption/models"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"gorm.io/gorm"
+	"errors"
+
 )
 
 func UserFirstLogin(c *gin.Context) {
@@ -40,14 +43,16 @@ func SendHeart(c *gin.Context) {
 		return
 	}
 
-	newheart1 := models.SendHeart{
-		SHA:            info.SHA1,
-		ENC:            info.ENC1,
-		GenderOfSender: info.GenderOfSender,
-	}
-	if err := Db.Create(&newheart1).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
-		return
+	if info.ENC1 != "" && info.SHA1 != "" {
+		newheart1 := models.SendHeart{
+			SHA:            info.SHA1,
+			ENC:            info.ENC1,
+			GenderOfSender: info.GenderOfSender,
+		}
+		if err := Db.Create(&newheart1).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err})
+			return
+		}
 	}
 
 	if info.ENC2 != "" && info.SHA2 != "" {
@@ -100,25 +105,32 @@ func HeartClaim(c *gin.Context) {
 	}
 
 	heartModel := models.SendHeart{}
-	// verifyheart := Db.Model(&heartModel).Where("sha =?", info.SHA, " AND ", "enc =?", info.Enc)
-	verifyheart := Db.Model(&heartModel).Where("sha =?", info.SHA).Where("enc =?", info.Enc)
-	if verifyheart.Error != nil || verifyheart == nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Heart Claim Request."})
+
+	verifyheart := Db.Model(&heartModel).Where("sha = ? AND enc = ?", info.SHA, info.Enc).First(&heartModel)
+	if verifyheart.Error != nil {
+		if errors.Is(verifyheart.Error, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Heart Claim Request."})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": verifyheart.Error.Error()})
+		}
+		return
+	}
+	// If the db has record of sha and enc then remove it from the record and add the sha, enc to userId
+	if err := Db.Model(&heartModel).Where("sha = ? AND enc = ?", info.SHA, info.Enc).Unscoped().Delete(&heartModel).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// If the db has record of sha and enc then remove it from the record and add the sha, enc to userId
-
-	// need to change the hardcoded uress string to userId from auth token.
-	// heartclaim := models.HeartClaims{
-	// 	ENC: info.Enc,
-	// 	SHA: info.SHA,
-	// 	Id:  "userr",
-	// }
-	// if err := Db.Create(&heartclaim).Error; err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err})
-	// 	return
-	// }
+		// need to change the hardcoded userr string to userId from auth token.
+	heartclaim := models.HeartClaims{
+		Id: info.Enc,
+		SHA: info.SHA,
+		Roll:  "userr",
+	}
+	if err := Db.Create(&heartclaim).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
 
 	// TODO: Implement "SendClaimedHeartBack" token logic
 	// generate a token for "SendClaimedHeartBack" which is valid for 10? mins.
