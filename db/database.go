@@ -22,7 +22,8 @@ func InitDB()(*PuppyDb){
 	dbName := os.Getenv("dbName")
 	user := os.Getenv("user")
 
-	loginstring := "host=" + host + " user=" + user + " password=" + password + " dbname=" + dbName + " port=" + port + " sslmode=disable TimeZone=Asia/Kolkata"
+	loginstring := "host=" + host + " user=" + user + " password=" + password
+	loginstring += " dbname=" + dbName + " port=" + port + " sslmode=disable TimeZone=Asia/Kolkata"
 
 	db, err := gorm.Open(postgres.Open(loginstring), &gorm.Config{})
     if err != nil {

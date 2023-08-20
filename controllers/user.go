@@ -45,39 +45,46 @@ func SendHeart(c *gin.Context) {
 		ENC:            info.ENC1,
 		GenderOfSender: info.GenderOfSender,
 	}
-	newheart2 := models.SendHeart{
-		SHA:            info.SHA2,
-		ENC:            info.ENC2,
-		GenderOfSender: info.GenderOfSender,
-	}
-	newheart3 := models.SendHeart{
-		SHA:            info.SHA3,
-		ENC:            info.ENC3,
-		GenderOfSender: info.GenderOfSender,
-	}
-	newheart4 := models.SendHeart{
-		SHA:            info.SHA4,
-		ENC:            info.ENC4,
-		GenderOfSender: info.GenderOfSender,
-	}
-
 	if err := Db.Create(&newheart1).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
 	}
-	if err := Db.Create(&newheart2).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
-		return
-	}
-	if err := Db.Create(&newheart3).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
-		return
-	}
-	if err := Db.Create(&newheart4).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
-		return
+
+	if info.ENC2 != "" && info.SHA2 != "" {
+		newheart2 := models.SendHeart{
+			SHA:            info.SHA2,
+			ENC:            info.ENC2,
+			GenderOfSender: info.GenderOfSender,
+		}
+		if err := Db.Create(&newheart2).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error1": err})
+			return
+		}
 	}
 
+	if info.ENC3 != "" && info.SHA3 != "" {
+		newheart3 := models.SendHeart{
+			SHA:            info.SHA3,
+			ENC:            info.ENC3,
+			GenderOfSender: info.GenderOfSender,
+		}
+		if err := Db.Create(&newheart3).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error2": err})
+			return
+		}
+	}
+
+	if info.ENC4 != "" && info.SHA4 != "" {
+		newheart4 := models.SendHeart{
+			SHA:            info.SHA4,
+			ENC:            info.ENC4,
+			GenderOfSender: info.GenderOfSender,
+		}
+		if err := Db.Create(&newheart4).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error3": err})
+			return
+		}
+	}
 	c.JSON(http.StatusAccepted, gin.H{"message": "Hearts Sent Successfully !!"})
 
 }
@@ -93,7 +100,8 @@ func HeartClaim(c *gin.Context) {
 	}
 
 	heartModel := models.SendHeart{}
-	verifyheart := Db.Model(&heartModel).Where("sha =?", info.SHA, " AND ", "enc =?", info.Enc)
+	// verifyheart := Db.Model(&heartModel).Where("sha =?", info.SHA, " AND ", "enc =?", info.Enc)
+	verifyheart := Db.Model(&heartModel).Where("sha =?", info.SHA).Where("enc =?", info.Enc)
 	if verifyheart.Error != nil || verifyheart == nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Heart Claim Request."})
 		return
@@ -102,21 +110,20 @@ func HeartClaim(c *gin.Context) {
 	// If the db has record of sha and enc then remove it from the record and add the sha, enc to userId
 
 	// need to change the hardcoded uress string to userId from auth token.
-	heartclaim := models.HeartClaims{
-		ENC: info.Enc,
-		SHA: info.SHA,
-		Id:  "userr",
-	}
-	if err := Db.Create(&heartclaim).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
-		return
-	}
+	// heartclaim := models.HeartClaims{
+	// 	ENC: info.Enc,
+	// 	SHA: info.SHA,
+	// 	Id:  "userr",
+	// }
+	// if err := Db.Create(&heartclaim).Error; err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+	// 	return
+	// }
 
 	// TODO: Implement "SendClaimedHeartBack" token logic
 	// generate a token for "SendClaimedHeartBack" which is valid for 10? mins.
-	
 
-	c.JSON(http.StatusAccepted, gin.H{"message": "Heart Claim Successfull"})
+	c.JSON(http.StatusAccepted, gin.H{"message": "Heart Claim Success"})
 }
 
 // TODO: Current issue is that if the user changes the enc of the claimed hash(which is very timeconsuming btw ;), there is no way to verify here.

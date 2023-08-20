@@ -8,12 +8,12 @@ type SendHeartFirst struct {
 	GenderOfSender string `json:"genderOfSender" binding:"required"`
 	ENC1           string `json:"enc1" binding:"required"`
 	SHA1           string `json:"sha1" binding:"required"`
-	ENC2           string `json:"enc2" binding:"required"`
-	SHA2           string `json:"sha2" binding:"required"`
-	ENC3           string `json:"enc3" binding:"required"`
-	SHA3           string `json:"sha3" binding:"required"`
-	ENC4           string `json:"enc4" binding:"required"`
-	SHA4           string `json:"sha4" binding:"required"`
+	ENC2           string `json:"enc2"`
+	SHA2           string `json:"sha2"`
+	ENC3           string `json:"enc3"`
+	SHA3           string `json:"sha3"`
+	ENC4           string `json:"enc4"`
+	SHA4           string `json:"sha4"`
 }
 
 type VerifyHeartClaim struct {
@@ -31,13 +31,12 @@ type (
 	SendHeart struct {
 		gorm.Model
 		SHA            string `json:"sha" bson:"sha" gorm:"unique"`
-		ENC            string `json:"enc" bson:"enc"`
+		ENC            string `json:"enc" bson:"enc" gorm:"unique"`
 		GenderOfSender string `json:"genderOfSender" bson:"gender"`
 	}
 )
 
 type (
-	// unique not needed in SHA but still...
 	HeartClaims struct {
 		gorm.Model
 		ENC string `json:"enc" bson:"enc" gorm:"unique"`

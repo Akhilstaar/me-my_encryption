@@ -20,7 +20,10 @@ func PuppyRoute(r *gin.Engine, db db.PuppyDb) {
 	// User administration
 	users := r.Group("/users")
 	{
-		users.POST("/login/first", controllers.UserFirstLogin)
+		// users.POST("/login/first", controllers.UserFirstLogin)
+		users.POST("/sendheart", controllers.SendHeart)
+		users.POST("/claimheart", controllers.HeartClaim)
+		users.POST("/sendclaimedheartback", controllers.SendClaimedHeartBack)
 		// users.GET("/mail/:id", controllers.UserMail)
 	}
 
