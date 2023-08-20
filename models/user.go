@@ -39,3 +39,13 @@ type TypeUserFirst struct {
 	PrivKey  string `json:"privKey" binding:"required"`
 	Data     string `json:"data" binding:"required"`
 }
+
+type UserLogin struct {
+	Id   string `json:"_id" binding:"required"`
+	Pass string `json:"passHash" binding:"required"`
+}
+
+type AdminLogin struct {
+	Id   string `json:"id" binding:"required"`
+	Pass string `json:"pass" binding:"required"`
+}

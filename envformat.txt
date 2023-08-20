@@ -1,0 +1,10 @@
+host = localhost
+port = 5432
+password = "password"
+dbName = postgres
+user = postgres
+CfgAdminPass = something
+
+jwtSigningKey = somerandomkey
+AdminId = may_be_aleatoryfreak
+AdminPass = you_can_just_guess_it

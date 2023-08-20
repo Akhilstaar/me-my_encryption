@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"net/http"
+	"os"
 	// "log"
+	"time"
 	"github.com/Akhilstaar/me-my_encryption/db"
 	"github.com/Akhilstaar/me-my_encryption/models"
 	"github.com/Akhilstaar/me-my_encryption/utils"
@@ -11,6 +13,44 @@ import (
 )
 
 var Db db.PuppyDb
+
+func AdminLogin(c *gin.Context) {
+	info := new(models.AdminLogin)
+	if err := c.BindJSON(info); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input data format."})
+		return
+	}
+
+	if info.Id != os.Getenv("AdminId"){
+		c.JSON(http.StatusForbidden, gin.H{"error" : "This action will be reported."})
+		return
+	}
+
+	if info.Pass != os.Getenv("AdminPass"){
+		c.JSON(http.StatusForbidden, gin.H{"error" : "Invalid Password."})
+		return
+	}
+
+	token, err := generateJWTToken(info.Id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate JWT token"})
+		return
+	}
+	expirationTime := time.Now().Add(time.Hour * 24)
+	cookie := &http.Cookie{
+		Name:     "Authorization",
+		Value:    token,
+		Expires:  expirationTime,
+		Path:     "/",
+		Domain:   "localhost",
+		HttpOnly: true,
+		Secure:   false, // Set this to true if you're using HTTPS, false for HTTP
+		SameSite: http.SameSiteStrictMode,
+	}
+	
+	http.SetCookie(c.Writer, cookie)
+	c.JSON(http.StatusOK, gin.H{"message": "Admin logged in successfully !!"})
+}
 
 func AddNewUser(c *gin.Context) {
 	// TODO: Modify this function to handle multiple concatenated json inputs
