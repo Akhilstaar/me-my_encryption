@@ -2,25 +2,36 @@ package db
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/Akhilstaar/me-my_encryption/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
+
+var DB *gorm.DB
 
 type PuppyDb struct {
 	*gorm.DB
 }
 
-func InitDB(dbString string) (*PuppyDb, error) {
-	db, err := gorm.Open(postgres.Open(dbString), &gorm.Config{})
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to Database: %v", err)
-	}
-    fmt.Println("Connected Successfully !!")
-    db.Close()
-	return &PuppyDb{db}, nil
-}
+func InitDB()(*PuppyDb){
+	host := os.Getenv("host")
+	port := os.Getenv("port")
+	password := os.Getenv("password")
+	dbName := os.Getenv("dbName")
+	user := os.Getenv("user")
 
-func (pdb *PuppyDb) GetTable(table string) *gorm.DB {
-	return pdb.DB.Table(table)
+	loginstring := "host=" + host + " user=" + user + " password=" + password + " dbname=" + dbName + " port=" + port + " sslmode=disable TimeZone=Asia/Kolkata"
+
+	db, err := gorm.Open(postgres.Open(loginstring), &gorm.Config{})
+    if err != nil {
+		fmt.Println(err)
+		panic(err)
+    }
+
+	db.AutoMigrate(&models.User{}, &models.SendHeart{})
+    fmt.Println("Connected to the database!")
+    // sqlDB.Close()
+	return &PuppyDb{db}
 }
