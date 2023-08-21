@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"os"
+
 	// "github.com/Akhilstaar/me-my_encryption/models"
 	"errors"
 	"time"
@@ -12,9 +13,6 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"gorm.io/gorm"
 )
-
-var jwtSigningKey = []byte(os.Getenv("UserjwtSigningKey"))
-var heartjwtSigningKey = []byte(os.Getenv("HeartjwtSigningKey"))
 
 func UserLogin(c *gin.Context) {
 	info := new(models.UserLogin)
@@ -75,33 +73,42 @@ func UserLogout(c *gin.Context) {
 	})
 }
 
+type AuthClaims struct {
+	User_id string `json:"user_id"`
+	jwt.StandardClaims
+}
+type HeartClaims struct {
+	User_id  string `json:"user_id"`
+	Verified string `json:"verified"`
+	jwt.StandardClaims
+}
+
 func generateJWTToken(userID string) (string, error) {
-
-	claims := jwt.MapClaims{
-		"user_id": userID,
-		"exp":     time.Now().Add(time.Hour * 8).Unix(),
+	var jwtSigningKey = os.Getenv("UserjwtSigningKey")
+	claims := AuthClaims{
+		userID,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 12).Unix(),
+			IssuedAt:  jwt.TimeFunc().Unix(),
+		},
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtSigningKey)
-	if err != nil {
-		return "", err
-	}
-	return tokenString, nil
+	tokenString, err := token.SignedString([]byte(jwtSigningKey))
+	return tokenString, err
 }
 
 func generateJWTTokenForHeartBack(userID string) (string, error) {
-
-	claims := jwt.MapClaims{
-		"verified": "Absolutely",
-		"user_id":  userID,
-		"exp":      time.Now().Add(time.Minute * 11).Unix(),
+	var heartjwtSigningKey = os.Getenv("HeartjwtSigningKey")
+	verified := "Absolutely"
+	claims := HeartClaims{
+		userID,
+		verified,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 12).Unix(),
+			IssuedAt:  jwt.TimeFunc().Unix(),
+		},
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(heartjwtSigningKey)
-	if err != nil {
-		return "", err
-	}
-	return tokenString, nil
+	tokenString, err := token.SignedString([]byte(heartjwtSigningKey))
+	return tokenString, err
 }

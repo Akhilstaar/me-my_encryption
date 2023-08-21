@@ -49,7 +49,12 @@ type (
 // --------- Returning Heart Below ---------
 
 type UserReturnHearts struct {
-	ReturnHearts   []VerifyHeartClaim `json:"returnhearts" binding:"required"`
+	ReturnHearts   []UserReturnHeart `json:"returnhearts" binding:"required"`
+}
+
+type UserReturnHeart struct {
+	ENC string `json:"enc" binding:"required" gorm:"unique"`
+	SHA string `json:"sha" binding:"required" gorm:"unique"`
 }
 
 type (

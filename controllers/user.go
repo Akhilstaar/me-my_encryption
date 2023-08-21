@@ -2,12 +2,14 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	// "fmt"
+	"net/http"
+	"time"
+
 	"github.com/Akhilstaar/me-my_encryption/models"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"net/http"
-	"time"
 )
 
 func UserFirstLogin(c *gin.Context) {
@@ -41,7 +43,6 @@ func SendHeart(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input data format."})
 		return
 	}
-
 	if info.ENC1 != "" && info.SHA1 != "" {
 		newheart1 := models.SendHeart{
 			SHA:            info.SHA1,
@@ -53,7 +54,7 @@ func SendHeart(c *gin.Context) {
 			return
 		}
 	}
-
+	
 	if info.ENC2 != "" && info.SHA2 != "" {
 		newheart2 := models.SendHeart{
 			SHA:            info.SHA2,
@@ -89,8 +90,9 @@ func SendHeart(c *gin.Context) {
 			return
 		}
 	}
-
+	
 	userID, _ := c.Get("user_id")
+	fmt.Println(userID)
 	for _, heart := range info.ReturnHearts {
 		enc := heart.Enc
 		sha := heart.SHA
@@ -134,7 +136,9 @@ func (e HeartClaimError) Error() string {
 
 func ReturnClaimedHeart(enc string, sha string, userId string) error {
 	heartModel := models.HeartClaims{}
-
+	if enc == "" || sha == "" {
+		return nil
+	}
 	verifyheart := Db.Model(&heartModel).Where("sha = ? AND roll = ?", sha, userId).First(&heartModel)
 	if verifyheart.Error != nil {
 		if errors.Is(verifyheart.Error, gorm.ErrRecordNotFound) {
@@ -204,23 +208,24 @@ func ReturnClaimedHeartLate(c *gin.Context) {
 	// TODO: Modify this function to handle multiple concatenated json inputs
 
 	info := new(models.UserReturnHearts)
-	if err := c.BindJSON(info).Error; err != nil {
-		c.JSON(http.StatusMisdirectedRequest, gin.H{"error": "Invalid input data format."})
+	if err := c.BindJSON(info); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input data format."})
 		return
 	}
 
 	userID, _ := c.Get("user_id")
 	for _, heart := range info.ReturnHearts {
-
-		enc := heart.Enc
+		enc := heart.ENC
 		sha := heart.SHA
-
 		if err := ReturnClaimedHeart(enc, sha, userID.(string)); err != nil {
 			c.JSON(http.StatusAccepted, gin.H{"message": "Found invalid Claim Requests. It will be recorded"})
 			return
 		}
-		continue
 	}
 
 	c.JSON(http.StatusAccepted, gin.H{"message": "Congrats !!, we just avoided unexpected event with probability < 1/1000."})
+}
+
+func getJWT(c *gin.Context) {
+
 }
