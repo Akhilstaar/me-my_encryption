@@ -79,7 +79,7 @@ func AddNewUser(c *gin.Context) {
 		Data:    "",
 		Submit:  false,
 		Matches: "",
-		Dirty:   true,
+		Dirty:   false,
 	}
 
 	// Insert the user into the database

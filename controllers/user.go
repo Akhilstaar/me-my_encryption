@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"errors"
-	"fmt"
+	// "fmt"
 	// "fmt"
 	"net/http"
 	"time"
@@ -23,16 +23,33 @@ func UserFirstLogin(c *gin.Context) {
 	}
 
 	// See U later ;) ...
-	// user := models.User{}
-	// record := Db.Model(&user).Select("auth_c").Where("id = ?", info.Id)
-	// if record.Error != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": record.Error})
-	// 	return
-	// }
+	user := models.User{}
+	record := Db.Model(&user).Where("id = ? AND auth_c = ?", info.Id, info.AuthCode).First(&user)
+	if record.Error != nil {
+		if errors.Is(record.Error, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Incorrect AuthCode entered !!"})
+			return
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong, Please try again."})
+			return
+		}
+	}
 
-	// Insert the user into the database
+	// var newuser models.User
+	if err := record.Updates(models.User{
+		Id:    info.Id,
+		Pass:  info.PassHash,
+		PrivK: info.PrivKey,
+		PubK:  info.PubKey,
+		AuthC: " ",
+		Data:  info.Data,
+		Dirty: true,
+	}).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong, Please try again."})
+		return
+	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "recorded"})
+	c.JSON(http.StatusCreated, gin.H{"message": "User Created Successfully."})
 }
 
 func SendHeart(c *gin.Context) {
@@ -43,6 +60,19 @@ func SendHeart(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input data format."})
 		return
 	}
+
+	userID, _ := c.Get("user_id")
+	var user models.User
+	record := Db.Model(&user).Where("id = ?", userID).First(&user)
+	if record.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong, Please try again."})
+		return
+	}
+	if user.Submit == true {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Hearts already sent."})
+		return
+	}
+
 	if info.ENC1 != "" && info.SHA1 != "" {
 		newheart1 := models.SendHeart{
 			SHA:            info.SHA1,
@@ -54,7 +84,14 @@ func SendHeart(c *gin.Context) {
 			return
 		}
 	}
-	
+
+	if err := record.Updates(models.User{
+		Submit: true,
+	}).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong, Please try again."})
+		return
+	}
+
 	if info.ENC2 != "" && info.SHA2 != "" {
 		newheart2 := models.SendHeart{
 			SHA:            info.SHA2,
@@ -62,7 +99,7 @@ func SendHeart(c *gin.Context) {
 			GenderOfSender: info.GenderOfSender,
 		}
 		if err := Db.Create(&newheart2).Error; err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error1": err})
+			c.JSON(http.StatusBadRequest, gin.H{"error in submitting heart 1": err})
 			return
 		}
 	}
@@ -74,7 +111,7 @@ func SendHeart(c *gin.Context) {
 			GenderOfSender: info.GenderOfSender,
 		}
 		if err := Db.Create(&newheart3).Error; err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error2": err})
+			c.JSON(http.StatusBadRequest, gin.H{"error in submitting heart 2": err})
 			return
 		}
 	}
@@ -86,13 +123,11 @@ func SendHeart(c *gin.Context) {
 			GenderOfSender: info.GenderOfSender,
 		}
 		if err := Db.Create(&newheart4).Error; err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error3": err})
+			c.JSON(http.StatusBadRequest, gin.H{"error in submitting heart 3": err})
 			return
 		}
 	}
-	
-	userID, _ := c.Get("user_id")
-	fmt.Println(userID)
+
 	for _, heart := range info.ReturnHearts {
 		enc := heart.Enc
 		sha := heart.SHA
