@@ -8,7 +8,7 @@ import (
 	// "os"
 	// "time"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 func AuthenticateAdmin() gin.HandlerFunc {
@@ -101,14 +101,14 @@ func AuthenticateUserHeartclaim() gin.HandlerFunc {
 
 		token, err := jwt.Parse(heartCookie, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token"})
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token Signing Algo"})
 				c.Abort()
 				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 			}
 			return heartjwtSigningKey, nil
 		})
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token 2"})
 			c.Abort()
 			return
 		}
