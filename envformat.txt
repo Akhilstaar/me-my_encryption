@@ -7,6 +7,9 @@ dbName = postgres
 user = postgres
 CfgAdminPass = something
 
-jwtSigningKey = somerandomkey
 AdminId = may_be_aleatoryfreak
 AdminPass = you_can_just_guess_it
+
+# Make sure both are different
+UserjwtSigningKey = "something"
+HeartjwtSigningKey = "something2"
