@@ -14,6 +14,8 @@ type SendHeartFirst struct {
 	SHA3           string `json:"sha3"`
 	ENC4           string `json:"enc4"`
 	SHA4           string `json:"sha4"`
+	ReturnHearts   []VerifyHeartClaim `json:"returnhearts"`
+
 }
 
 type VerifyHeartClaim struct {
@@ -48,8 +50,7 @@ type (
 // --------- Returning Heart Below ---------
 
 type UserReturnHearts struct {
-	SHA string `json:"sha" bson:"sha" binding:"required"`
-	ENC string `json:"enc" bson:"enc" binding:"required"`
+	ReturnHearts   []VerifyHeartClaim `json:"returnhearts" binding:"required"`
 }
 
 type (

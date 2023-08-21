@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/Akhilstaar/me-my_encryption/models"
-	"github.com/golang-jwt/jwt"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"gorm.io/gorm"
 )
 
@@ -50,7 +50,7 @@ func UserLogin(c *gin.Context) {
 		Secure:   false, // Set this to true if you're using HTTPS, false for HTTP
 		SameSite: http.SameSiteStrictMode,
 	}
-	
+
 	http.SetCookie(c.Writer, cookie)
 	c.JSON(http.StatusOK, gin.H{"message": "User logged in successfully !!"})
 }
@@ -79,6 +79,22 @@ func generateJWTToken(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"exp":     time.Now().Add(time.Hour * 8).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtSigningKey)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
+}
+
+func generateJWTTokenForHeartBack(userID string) (string, error) {
+
+	claims := jwt.MapClaims{
+		"verified": "absolutely",
+		"user_id":  userID,
+		"exp":      time.Now().Add(time.Minute * 11).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

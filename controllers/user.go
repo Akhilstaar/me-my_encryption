@@ -1,17 +1,17 @@
 package controllers
 
 import (
+	"errors"
+	// "fmt"
 	"github.com/Akhilstaar/me-my_encryption/models"
 	"github.com/gin-gonic/gin"
-	"net/http"
 	"gorm.io/gorm"
-	"errors"
-
+	"net/http"
+	"time"
 )
 
 func UserFirstLogin(c *gin.Context) {
-	// TODO: Implement user authentication logic
-	// Authenticate the user here
+	// User already authenticated in router.go by gin.HandlerFunc
 
 	// Validate the input format
 	info := new(models.TypeUserFirst)
@@ -34,8 +34,7 @@ func UserFirstLogin(c *gin.Context) {
 }
 
 func SendHeart(c *gin.Context) {
-	// TODO: Implement user authentication logic
-	// Authenticate the user here
+	// User already authenticated in router.go by gin.HandlerFunc
 
 	info := new(models.SendHeartFirst)
 	if err := c.BindJSON(info); err != nil {
@@ -90,14 +89,75 @@ func SendHeart(c *gin.Context) {
 			return
 		}
 	}
-	c.JSON(http.StatusAccepted, gin.H{"message": "Hearts Sent Successfully !!"})
 
+	userID, _ := c.Get("user_id")
+	for _, heart := range info.ReturnHearts {
+		enc := heart.Enc
+		sha := heart.SHA
+
+		if err := ReturnClaimedHeart(enc,sha,userID.(string)); err != nil {
+			c.JSON(http.StatusAccepted, gin.H{"message": "Hearts Sent Successfully !!, but found invalid Claim Requests. It will be recorded"})
+			return
+		}
+	}
+
+	token, err := generateJWTTokenForHeartBack(userID.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate JWT token"})
+		return
+	}
+	expirationTime := time.Now().Add(time.Hour * 24)
+	cookie := &http.Cookie{
+		Name:     "HeartBack",
+		Value:    token,
+		Expires:  expirationTime,
+		Path:     "/",
+		Domain:   "localhost",
+		HttpOnly: true,
+		Secure:   false, // Set this to true if you're using HTTPS, false for HTTP
+		SameSite: http.SameSiteStrictMode,
+	}
+
+	http.SetCookie(c.Writer, cookie)
+
+	c.JSON(http.StatusAccepted, gin.H{"message": "Hearts Sent Successfully !!"})	
+}
+
+// need to change the flow a bit.
+type HeartClaimError struct {
+	Message string
+}
+
+func (e HeartClaimError) Error() string {
+	return e.Message
+}
+
+
+func ReturnClaimedHeart(enc string,sha string, userId string) (error){
+	heartModel := models.HeartClaims{}
+
+	verifyheart := Db.Model(&heartModel).Where("sha = ? AND roll = ?", sha, userId).First(&heartModel)
+	if verifyheart.Error != nil {
+		if errors.Is(verifyheart.Error, gorm.ErrRecordNotFound) {
+			return HeartClaimError{Message: "Unauthorized Heart Claim attempt, it will be recorded."}
+		} else {
+			return HeartClaimError{Message: verifyheart.Error.Error()}
+		}
+	}
+
+	heartclaim := models.ReturnHearts{
+		SHA:  sha,
+		ENC: enc,
+	}
+	if err := Db.Create(&heartclaim).Error; err != nil {
+		return HeartClaimError{Message: "Something Unexpected Occurred while adding the heart claim."}
+	}
+
+	return nil
 }
 
 func HeartClaim(c *gin.Context) {
-	// TODO: Implement user authentication logic
-	// Authenticate the user here
-
+	
 	info := new(models.VerifyHeartClaim)
 	if err := c.BindJSON(info); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input data format."})
@@ -110,8 +170,8 @@ func HeartClaim(c *gin.Context) {
 	if verifyheart.Error != nil {
 		if errors.Is(verifyheart.Error, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Heart Claim Request."})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": verifyheart.Error.Error()})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": verifyheart.Error.Error()})
 		}
 		return
 	}
@@ -121,49 +181,53 @@ func HeartClaim(c *gin.Context) {
 		return
 	}
 
-		// need to change the hardcoded userr string to userId from auth token.
+	userID, err := c.Get("user_id")
+	if err {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token working but still invalid."})
+		return
+	}
+	
 	heartclaim := models.HeartClaims{
 		Id: info.Enc,
 		SHA: info.SHA,
-		Roll:  "userr",
+		Roll:  userID.(string),
 	}
 	if err := Db.Create(&heartclaim).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 
-	// TODO: Implement "SendClaimedHeartBack" token logic
+	// TODO: (RESOLVED) Implement "SendClaimedHeartBack" token logic -- DONE ?
 	// generate a token for "SendClaimedHeartBack" which is valid for 10? mins.
-
+	
 	c.JSON(http.StatusAccepted, gin.H{"message": "Heart Claim Success"})
 }
 
-// TODO: Current issue is that if the user changes the enc of the claimed hash(which is very timeconsuming btw ;), there is no way to verify here.
+
+
+// TODO: (RESOLVED) Current issue is that if the user changes the enc of the claimed hash(which is very timeconsuming btw ;), there is no way to verify here. -- DONE
 // Why not just add a time window of 10? mins in which the heartback can be accessed.
 // So, what are the odds that user gets a heart within 10 mins of submitting its hearts ?.
 // Even if the user gets it, what are the odds that user will be able to Intercept the request and make a claim with "enc" which is encoded with pub key of user's 5th choice ?
-func SendClaimedHeartBack(c *gin.Context) {
+func ReturnClaimedHeartLate(c *gin.Context) {
 	// TODO: Modify this function to handle multiple concatenated json inputs
-
-	// TODO: Implement user authentication logic
-	// Authenticate the user here
-
-	// Authenticate the "SendClaimedHeartBack" token
-
+	
 	info := new(models.UserReturnHearts)
 	if err := c.BindJSON(info).Error; err != nil {
 		c.JSON(http.StatusMisdirectedRequest, gin.H{"error": "Invalid input data format."})
 		return
 	}
 
-	returnheart := models.ReturnHearts{
-		SHA: info.SHA,
-		ENC: info.ENC,
+	userID, _ := c.Get("user_id")
+	for _, heart := range info.ReturnHearts {
+		enc := heart.Enc
+		sha := heart.SHA
+
+		if err := ReturnClaimedHeart(enc,sha,userID.(string)); err != nil {
+			c.JSON(http.StatusAccepted, gin.H{"message": "Found invalid Claim Requests. It will be recorded"})
+			return
+		}
 	}
 
-	if err := Db.Create(&returnheart).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid tokens SHA/ENC or Server side error. Please try again."})
-	}
-
-	c.JSON(http.StatusAccepted, gin.H{"message": "Return Heart sent"})
+	c.JSON(http.StatusAccepted, gin.H{"message": "Congrats !!, we just avoided unexpected event with probability < 1/1000."})
 }
