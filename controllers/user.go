@@ -95,7 +95,7 @@ func SendHeart(c *gin.Context) {
 		enc := heart.Enc
 		sha := heart.SHA
 
-		if err := ReturnClaimedHeart(enc,sha,userID.(string)); err != nil {
+		if err := ReturnClaimedHeart(enc, sha, userID.(string)); err != nil {
 			c.JSON(http.StatusAccepted, gin.H{"message": "Hearts Sent Successfully !!, but found invalid Claim Requests. It will be recorded"})
 			return
 		}
@@ -120,7 +120,7 @@ func SendHeart(c *gin.Context) {
 
 	http.SetCookie(c.Writer, cookie)
 
-	c.JSON(http.StatusAccepted, gin.H{"message": "Hearts Sent Successfully !!"})	
+	c.JSON(http.StatusAccepted, gin.H{"message": "Hearts Sent Successfully !!"})
 }
 
 // need to change the flow a bit.
@@ -132,8 +132,7 @@ func (e HeartClaimError) Error() string {
 	return e.Message
 }
 
-
-func ReturnClaimedHeart(enc string,sha string, userId string) (error){
+func ReturnClaimedHeart(enc string, sha string, userId string) error {
 	heartModel := models.HeartClaims{}
 
 	verifyheart := Db.Model(&heartModel).Where("sha = ? AND roll = ?", sha, userId).First(&heartModel)
@@ -141,12 +140,12 @@ func ReturnClaimedHeart(enc string,sha string, userId string) (error){
 		if errors.Is(verifyheart.Error, gorm.ErrRecordNotFound) {
 			return HeartClaimError{Message: "Unauthorized Heart Claim attempt, it will be recorded."}
 		} else {
-			return HeartClaimError{Message: verifyheart.Error.Error()}
+			return HeartClaimError{Message: "verifyheart.Error.Error()"}
 		}
 	}
 
 	heartclaim := models.ReturnHearts{
-		SHA:  sha,
+		SHA: sha,
 		ENC: enc,
 	}
 	if err := Db.Create(&heartclaim).Error; err != nil {
@@ -157,7 +156,7 @@ func ReturnClaimedHeart(enc string,sha string, userId string) (error){
 }
 
 func HeartClaim(c *gin.Context) {
-	
+
 	info := new(models.VerifyHeartClaim)
 	if err := c.BindJSON(info); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input data format."})
@@ -165,13 +164,12 @@ func HeartClaim(c *gin.Context) {
 	}
 
 	heartModel := models.SendHeart{}
-
 	verifyheart := Db.Model(&heartModel).Where("sha = ? AND enc = ?", info.SHA, info.Enc).First(&heartModel)
 	if verifyheart.Error != nil {
 		if errors.Is(verifyheart.Error, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Heart Claim Request."})
-			} else {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": verifyheart.Error.Error()})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": verifyheart.Error.Error()})
 		}
 		return
 	}
@@ -181,16 +179,11 @@ func HeartClaim(c *gin.Context) {
 		return
 	}
 
-	userID, err := c.Get("user_id")
-	if err {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token working but still invalid."})
-		return
-	}
-	
+	userID, _ := c.Get("user_id")
 	heartclaim := models.HeartClaims{
-		Id: info.Enc,
-		SHA: info.SHA,
-		Roll:  userID.(string),
+		Id:   info.Enc,
+		SHA:  info.SHA,
+		Roll: userID.(string),
 	}
 	if err := Db.Create(&heartclaim).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
@@ -199,11 +192,9 @@ func HeartClaim(c *gin.Context) {
 
 	// TODO: (RESOLVED) Implement "SendClaimedHeartBack" token logic -- DONE ?
 	// generate a token for "SendClaimedHeartBack" which is valid for 10? mins.
-	
+
 	c.JSON(http.StatusAccepted, gin.H{"message": "Heart Claim Success"})
 }
-
-
 
 // TODO: (RESOLVED) Current issue is that if the user changes the enc of the claimed hash(which is very timeconsuming btw ;), there is no way to verify here. -- DONE
 // Why not just add a time window of 10? mins in which the heartback can be accessed.
@@ -211,7 +202,7 @@ func HeartClaim(c *gin.Context) {
 // Even if the user gets it, what are the odds that user will be able to Intercept the request and make a claim with "enc" which is encoded with pub key of user's 5th choice ?
 func ReturnClaimedHeartLate(c *gin.Context) {
 	// TODO: Modify this function to handle multiple concatenated json inputs
-	
+
 	info := new(models.UserReturnHearts)
 	if err := c.BindJSON(info).Error; err != nil {
 		c.JSON(http.StatusMisdirectedRequest, gin.H{"error": "Invalid input data format."})
@@ -220,13 +211,15 @@ func ReturnClaimedHeartLate(c *gin.Context) {
 
 	userID, _ := c.Get("user_id")
 	for _, heart := range info.ReturnHearts {
+
 		enc := heart.Enc
 		sha := heart.SHA
 
-		if err := ReturnClaimedHeart(enc,sha,userID.(string)); err != nil {
+		if err := ReturnClaimedHeart(enc, sha, userID.(string)); err != nil {
 			c.JSON(http.StatusAccepted, gin.H{"message": "Found invalid Claim Requests. It will be recorded"})
 			return
 		}
+		continue
 	}
 
 	c.JSON(http.StatusAccepted, gin.H{"message": "Congrats !!, we just avoided unexpected event with probability < 1/1000."})

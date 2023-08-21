@@ -13,7 +13,8 @@ import (
 	"gorm.io/gorm"
 )
 
-var jwtSigningKey = []byte(os.Getenv("jwtSigningKey"))
+var jwtSigningKey = []byte(os.Getenv("UserjwtSigningKey"))
+var heartjwtSigningKey = []byte(os.Getenv("HeartjwtSigningKey"))
 
 func UserLogin(c *gin.Context) {
 	info := new(models.UserLogin)
@@ -92,13 +93,13 @@ func generateJWTToken(userID string) (string, error) {
 func generateJWTTokenForHeartBack(userID string) (string, error) {
 
 	claims := jwt.MapClaims{
-		"verified": "absolutely",
+		"verified": "Absolutely",
 		"user_id":  userID,
 		"exp":      time.Now().Add(time.Minute * 11).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtSigningKey)
+	tokenString, err := token.SignedString(heartjwtSigningKey)
 	if err != nil {
 		return "", err
 	}

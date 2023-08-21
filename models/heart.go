@@ -15,7 +15,6 @@ type SendHeartFirst struct {
 	ENC4           string `json:"enc4"`
 	SHA4           string `json:"sha4"`
 	ReturnHearts   []VerifyHeartClaim `json:"returnhearts"`
-
 }
 
 type VerifyHeartClaim struct {

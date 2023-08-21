@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
-	"log"
 	// "os"
 	// "time"
 	"github.com/gin-gonic/gin"
@@ -36,11 +36,11 @@ func AuthenticateAdmin() gin.HandlerFunc {
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			userID := claims["user_id"].(string)
-			if userID!=os.Getenv("AdminId"){
+			if userID != os.Getenv("AdminId") {
 				unauthorizedMessage := fmt.Sprintf("Unauthorized Login attempt by %s, it will be recorded.", userID)
 				log.Println(unauthorizedMessage)
 				c.JSON(http.StatusUnauthorized, gin.H{"error": unauthorizedMessage})
-				c.Abort()				
+				c.Abort()
 			}
 			c.Next()
 		} else {
@@ -75,9 +75,9 @@ func AuthenticateUser() gin.HandlerFunc {
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			userID := claims["user_id"].(string)
-			if userID==os.Getenv("AdminId"){
+			if userID == os.Getenv("AdminId") {
 				c.JSON(http.StatusUnauthorized, gin.H{"error": "You Serious ?? , login using Postman or CLI, the frontend is only for normal users."})
-				c.Abort()				
+				c.Abort()
 			}
 			c.Set("user_id", userID)
 			c.Next()
@@ -90,20 +90,22 @@ func AuthenticateUser() gin.HandlerFunc {
 
 func AuthenticateUserHeartclaim() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authCookie, err := c.Cookie("HeartBack")
+		
+		useridfromJWT, _ := c.Get("user_id")
+		heartCookie, err := c.Cookie("HeartBack")
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Late HeartClaim cookie missing"})
 			c.Abort()
 			return
 		}
 
-		token, err := jwt.Parse(authCookie, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.Parse(heartCookie, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token"})
 				c.Abort()
 				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 			}
-			return jwtSigningKey, nil
+			return heartjwtSigningKey, nil
 		})
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token"})
@@ -113,9 +115,14 @@ func AuthenticateUserHeartclaim() gin.HandlerFunc {
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			HeartBackUserID := claims["user_id"]
-			useridfromJWT,_ := c.Get("user_id")
-
-			if(useridfromJWT.(string) != HeartBackUserID){
+			verified := claims["verified"]
+			if verified != "Absolutely" {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Forged Claim Token"})
+				c.Abort()
+				return
+			}
+			fmt.Println(HeartBackUserID)
+			if useridfromJWT != HeartBackUserID {
 				c.JSON(http.StatusUnauthorized, gin.H{"error": "Forged Claim Token"})
 				c.Abort()
 				return
@@ -128,4 +135,3 @@ func AuthenticateUserHeartclaim() gin.HandlerFunc {
 		}
 	}
 }
-

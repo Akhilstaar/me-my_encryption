@@ -24,8 +24,13 @@ func PuppyRoute(r *gin.Engine, db db.PuppyDb) {
 		// users.POST("/login/first", controllers.UserFirstLogin)
 		users.POST("/sendheart", controllers.SendHeart)
 		users.POST("/claimheart", controllers.HeartClaim)
-		users.POST("/returnclaimedheartlate", controllers.ReturnClaimedHeartLate)
 		// users.GET("/mail/:id", controllers.UserMail)
+	}
+	late := r.Group("/special")
+	{
+		late.Use(controllers.AuthenticateUser())
+		late.Use(controllers.AuthenticateUserHeartclaim())
+		late.POST("/returnclaimedheartlate", controllers.ReturnClaimedHeartLate)
 	}
 	
 	// Session administration

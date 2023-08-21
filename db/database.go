@@ -31,7 +31,7 @@ func InitDB()(*PuppyDb){
 		panic(err)
     }
 
-	db.AutoMigrate(&models.User{}, &models.SendHeart{}, &models.HeartClaims{})
+	db.AutoMigrate(&models.User{}, &models.SendHeart{}, &models.HeartClaims{}, &models.ReturnHearts{})
     fmt.Println("Connected to the database!")
     // sqlDB.Close()
 	return &PuppyDb{db}
