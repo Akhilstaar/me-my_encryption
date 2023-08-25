@@ -260,7 +260,3 @@ func ReturnClaimedHeartLate(c *gin.Context) {
 
 	c.JSON(http.StatusAccepted, gin.H{"message": "Congrats !!, we just avoided unexpected event with probability < 1/1000."})
 }
-
-func getJWT(c *gin.Context) {
-
-}

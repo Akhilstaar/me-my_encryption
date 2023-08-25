@@ -60,33 +60,36 @@ func AddNewUser(c *gin.Context) {
 	// Authenticate the admin here
 
 	// Validate the input format
-	info := new(models.TypeUserNew)
+	info := new(models.AddNewUser)
 	if err := c.BindJSON(info); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input data format."})
 		return
 	}
 
 	// Create user
-	newUser := models.User{
-		Id:      info.Id,
-		Name:    info.Name,
-		Email:   info.Email,
-		Gender:  info.Gender,
-		Pass:    info.PassHash,
-		PrivK:   "",
-		PubK:    "",
-		AuthC:   utils.RandStringRunes(15),
-		Data:    "",
-		Submit:  false,
-		Matches: "",
-		Dirty:   false,
-	}
+	for _,user := range info.TypeUserNew {
 
-	// Insert the user into the database
-
-	if err := Db.Create(&newUser).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
-		return
+		newUser := models.User{
+			Id:      user.Id,
+			Name:    user.Name,
+			Email:   user.Email,
+			Gender:  user.Gender,
+			Pass:    user.PassHash,
+			PrivK:   "",
+			PubK:    "",
+			AuthC:   utils.RandStringRunes(15),
+			Data:    "",
+			Submit:  false,
+			Matches: "",
+			Dirty:   false,
+		}
+	
+		// Insert the user into the database
+	
+		if err := Db.Create(&newUser).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+			return
+		}
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "User created successfully."})

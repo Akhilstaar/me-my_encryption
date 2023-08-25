@@ -22,6 +22,7 @@ func PuppyRoute(r *gin.Engine, db db.PuppyDb) {
 	{
 		users.POST("/login/first", controllers.UserFirstLogin)
 		users.Use(controllers.AuthenticateUser())
+		users.GET("/fetchall", controllers.FetchHearts)
 		users.POST("/sendheart", controllers.SendHeart)
 		users.POST("/claimheart", controllers.HeartClaim)
 		// users.GET("/mail/:id", controllers.UserMail)

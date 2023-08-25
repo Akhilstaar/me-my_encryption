@@ -8,11 +8,11 @@ Install(if not already) & Run the postgres server(refer [link](https://www.postg
 
 Depending on the authentication details you've set up modify the `.env` file(refer envformat.txt) by filling in details of the postgres server.
 
-> Format of the .env file
+> Format of the .env file -- Don't forget to disable SSL if not already.
 ```
 host = localhost
 port = 5432
-password = "password"
+password = 'password'
 dbName = postgres
 user = postgres
 CfgAdminPass = something

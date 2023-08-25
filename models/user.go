@@ -22,6 +22,10 @@ type (
 		Dirty   bool   `json:"dirty" bson:"dirty"`
 	}
 )
+type AddNewUser struct {
+	TypeUserNew   []TypeUserNew `json:"newuser" binding:"required"`
+}
+
 
 type TypeUserNew struct {
 	Id       string `json:"roll" binding:"required"`

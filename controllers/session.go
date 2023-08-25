@@ -104,7 +104,7 @@ func generateJWTTokenForHeartBack(userID string) (string, error) {
 		userID,
 		verified,
 		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 12).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour / 3).Unix(),
 			IssuedAt:  jwt.TimeFunc().Unix(),
 		},
 	}
