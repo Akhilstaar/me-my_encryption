@@ -7,37 +7,27 @@ import (
 )
 
 func FetchHearts(c *gin.Context) {
-    var hearts []models.SendHeart
-    fetchheart := Db.Model(&hearts).Where("1 = 1").Find(&hearts)
+    var heart models.SendHeart
+    var hearts []models.FetchHeartsFirst
+    // Fetch only required columns from the database
+    fetchheart := Db.Model(&heart).Select("enc", "gender_of_sender").Find(&hearts)
     
     if fetchheart.Error != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": "No hearts to fetch."})
         return
     }
-    
-    var simplifiedHearts []map[string]interface{}
-    for _, heart := range hearts {
-        simplifiedHeart := map[string]interface{}{
-            "enc":           heart.ENC,
-            "genderOfSender": heart.GenderOfSender,
-        }
-        simplifiedHearts = append(simplifiedHearts, simplifiedHeart)
-    }
-    
-    c.JSON(http.StatusOK, simplifiedHearts)
+
+    c.JSON(http.StatusOK, hearts)
 }
 
+// func FetchReturnHearts(c *gin.Context) {
+// 	heartModel := models.ReturnHearts{}
+//     var hearts []models.ReturnHearts
+// 	fetchheart := Db.Model(&heartModel).Select("enc").Find(hearts)
+// 	if fetchheart.Error != nil {
+// 		c.JSON(http.StatusNotFound, gin.H{"error" : "No hearts to fetch."})
+//         return
+// 	}
 
-func FetchReturnHearts(c *gin.Context) {
-	// TODO: Implement user authentication logic
-	// Authenticate the user here
-
-
-	heartModel := models.SendHeart{}
-	fetchheart := Db.Model(&heartModel).Select("enc","genderOfSender")
-	if fetchheart.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error" : "No hearts to fetch."})
-	}
-
-	c.JSON(http.StatusAccepted, gin.H{"hearts" : fetchheart})
-}
+// 	c.JSON(http.StatusOK, hearts)
+// }

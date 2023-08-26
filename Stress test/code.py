@@ -14,7 +14,7 @@ def process_id(id):
         "passHash": "aaaa",
     })
 
-    url = "http://localhost:8080/session/login"
+    url = "http://20.25.48.4:8080/session/login"
 
     session = requests.Session()
     response = session.post(url, headers=headers, data=payload)
@@ -25,8 +25,8 @@ def process_id(id):
         'Cookie': cookie
     }
     
-    hearturl = "http://localhost:8080/users/sendheart"  # Corrected URL
-    fetch_url = "http://localhost:8080/users/fetchall"  # Corrected URL
+    hearturl = "http://20.25.48.4:8080/users/sendheart"  # Corrected URL
+    fetch_url = "http://20.25.48.4:8080/users/fetchall"  # Corrected URL
     if(id%100 ==12):
         res = requests.get(fetch_url, headers=headers_with_cookie)
         print("fetching")
@@ -54,7 +54,7 @@ def process_id(id):
     print(response.text, id)
 
 def main():
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         ids = range(210000, 219999)
         executor.map(process_id, ids)
 

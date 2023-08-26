@@ -64,3 +64,7 @@ type (
 		ENC string `json:"enc" bson:"enc" gorm:"unique"`
 	}
 )
+
+type FetchReturnHeart struct {
+	ENC string `json:"enc" binding:"required" gorm:"unique"`
+}
