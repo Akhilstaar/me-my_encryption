@@ -42,7 +42,7 @@ func AdminLogin(c *gin.Context) {
 		Value:    token,
 		Expires:  expirationTime,
 		Path:     "/",
-		Domain:   "localhost",
+		Domain:   os.Getenv("domain"),
 		HttpOnly: true,
 		Secure:   false, // Set this to true if you're using HTTPS, false for HTTP
 		SameSite: http.SameSiteStrictMode,
