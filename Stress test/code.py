@@ -14,10 +14,11 @@ def process_id(id):
         "passHash": "aaaa",
     })
 
-    url = "http://20.25.48.4:8080/session/login"
+    url = "http://4.240.83.89:8080/session/login"
 
     session = requests.Session()
     response = session.post(url, headers=headers, data=payload)
+    print(response.text, id)
     cookie = response.headers.get("Set-Cookie").split(";")[0]
     
     headers_with_cookie = {
@@ -25,13 +26,12 @@ def process_id(id):
         'Cookie': cookie
     }
     
-    hearturl = "http://20.25.48.4:8080/users/sendheart"  # Corrected URL
-    fetch_url = "http://20.25.48.4:8080/users/fetchall"  # Corrected URL
-    if(id%100 ==12):
+    hearturl = "http://4.240.83.89:8080/users/sendheart"
+    fetch_url = "http://4.240.83.89:8080/users/fetchall"
+    if(id%20 ==12):
         res = requests.get(fetch_url, headers=headers_with_cookie)
-        print("fetching")
+        print("fetching", id)
     
-    # print(res.text)
     hearts = json.dumps({
         "genderOfSender": "1",
         "enc1": hashlib.sha256(str(random.getrandbits(256)).encode()).hexdigest(),
@@ -52,9 +52,13 @@ def process_id(id):
 
     response = requests.post(hearturl, headers=headers_with_cookie, data=hearts)
     print(response.text, id)
+    return
 
 def main():
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+
+    # for id in range(210000, 219999):
+    #     process_id(id)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         ids = range(210000, 219999)
         executor.map(process_id, ids)
 

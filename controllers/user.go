@@ -3,7 +3,6 @@ package controllers
 import (
 	"errors"
 	// "fmt"
-	// "fmt"
 	"net/http"
 	"time"
 
@@ -21,9 +20,14 @@ func UserFirstLogin(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input data format."})
 		return
 	}
+	
+	if info.AuthCode == " " {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "User already registered."})
+		return
+	}
 
 	// See U later ;) ...
-	user := models.User{}
+	user := models.User
 	record := Db.Model(&user).Where("id = ? AND auth_c = ?", info.Id, info.AuthCode).First(&user)
 	if record.Error != nil {
 		if errors.Is(record.Error, gorm.ErrRecordNotFound) {

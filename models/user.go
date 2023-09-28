@@ -22,6 +22,7 @@ type (
 		Dirty   bool   `json:"dirty" bson:"dirty"`
 	}
 )
+
 type AddNewUser struct {
 	TypeUserNew   []TypeUserNew `json:"newuser" binding:"required"`
 }
@@ -49,7 +50,13 @@ type UserLogin struct {
 	Pass string `json:"passHash" binding:"required"`
 }
 
+// w'll change it later (maybee..)
 type AdminLogin struct {
 	Id   string `json:"id" binding:"required"`
 	Pass string `json:"pass" binding:"required"`
+}
+
+type mailData struct {
+	Email string `json:"email" binding:"required"`
+	AuthC string `json:"authCode" binding:"required"`
 }
