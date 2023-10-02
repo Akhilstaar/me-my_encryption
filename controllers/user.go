@@ -20,14 +20,20 @@ func UserFirstLogin(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input data format."})
 		return
 	}
-	
+
 	if info.AuthCode == " " {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "User already registered."})
 		return
 	}
 
 	// See U later ;) ...
-	user := models.User
+	user := models.User{}
+	publicK := Db.Model(&user).Where("pub_k = ?", info.PubKey).First(&user)
+	if publicK.Error == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Please enter another public key !!"})
+		return	
+	}
+
 	record := Db.Model(&user).Where("id = ? AND auth_c = ?", info.Id, info.AuthCode).First(&user)
 	if record.Error != nil {
 		if errors.Is(record.Error, gorm.ErrRecordNotFound) {
@@ -43,7 +49,6 @@ func UserFirstLogin(c *gin.Context) {
 	if err := record.Updates(models.User{
 		Id:    info.Id,
 		Pass:  info.PassHash,
-		PrivK: info.PrivKey,
 		PubK:  info.PubKey,
 		AuthC: " ",
 		Data:  info.Data,
@@ -72,7 +77,7 @@ func SendHeart(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong, Please try again."})
 		return
 	}
-	if user.Submit == true {
+	if user.Submit {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Hearts already sent."})
 		return
 	}

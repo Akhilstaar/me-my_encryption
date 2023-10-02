@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSA Encryption and Decryption</title>
+</head>
+<body>
+    <h1>RSA Encryption and Decryption</h1>
+    <label for="message">Enter a message:</label>
+    <input type="text" id="message">
+    <button onclick="performEncryption()">Encrypt & Decrypt</button>
+
+    <h2>Public Key:</h2>
+    <pre id="publicKey"></pre>
+
+    <h2>Private Key:</h2>
+    <pre id="privateKey"></pre>
+
+    <h2>Original Message:</h2>
+    <p id="originalMessage"></p>
+
+    <h2>Encrypted Data:</h2>
+    <pre id="encryptedData"></pre>
+
+    <h2>Decrypted Message:</h2>
+    <p id="decryptedMessage"></p>
+
+    <script>
+        async function generateRSAKeyPair() {
+            const keyPair = await window.crypto.subtle.generateKey(
+                {
+                    name: "RSA-OAEP",
+                    modulusLength: 2048,
+                    publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+                    hash: "SHA-256",
+                },
+                true,
+                ["encrypt", "decrypt"]
+            );
+
+            return keyPair;
+        }
+
+        async function encryptWithPublicKey(publicKey, plaintext) {
+            const encryptedBuffer = await window.crypto.subtle.encrypt(
+                {
+                    name: "RSA-OAEP",
+                },
+                publicKey,
+                new TextEncoder().encode(plaintext)
+            );
+
+            return encryptedBuffer;
+        }
+
+        async function decryptWithPrivateKey(privateKey, encryptedData) {
+            const decryptedBuffer = await window.crypto.subtle.decrypt(
+                {
+                    name: "RSA-OAEP",
+                },
+                privateKey,
+                encryptedData
+            );
+
+            return new TextDecoder().decode(decryptedBuffer);
+        }
+
+        async function performEncryption() {
+            const messageInput = document.getElementById("message");
+            const publicKeyElement = document.getElementById("publicKey");
+            const privateKeyElement = document.getElementById("privateKey");
+            const originalMessageElement = document.getElementById("originalMessage");
+            const encryptedDataElement = document.getElementById("encryptedData");
+            const decryptedMessageElement = document.getElementById("decryptedMessage");
+            const keyPair = await generateRSAKeyPair();
+            const publicKey = keyPair.publicKey;
+            const privateKey = keyPair.privateKey;
+
+            try {
+
+                const plaintext = messageInput.value;
+
+                const encryptedData = await encryptWithPublicKey(publicKey, plaintext);
+                const decryptedData = await decryptWithPrivateKey(privateKey, encryptedData);
+
+                publicKeyElement.textContent = publicKey;
+                privateKeyElement.textContent = privateKey;
+                originalMessageElement.textContent = plaintext;
+                encryptedDataElement.textContent = new Uint8Array(encryptedData).toString();
+                decryptedMessageElement.textContent = decryptedData;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

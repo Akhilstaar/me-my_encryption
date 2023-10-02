@@ -12,8 +12,6 @@ import (
 	// "github.com/gin-gonic/gin/binding"
 )
 
-var Db db.PuppyDb
-
 func AdminLogin(c *gin.Context) {
 	info := new(models.AdminLogin)
 	if err := c.BindJSON(info); err != nil {
@@ -21,13 +19,13 @@ func AdminLogin(c *gin.Context) {
 		return
 	}
 
-	if info.Id != os.Getenv("AdminId"){
-		c.JSON(http.StatusForbidden, gin.H{"error" : "This action will be reported."})
+	if info.Id != os.Getenv("AdminId") {
+		c.JSON(http.StatusForbidden, gin.H{"error": "This action will be reported."})
 		return
 	}
 
-	if info.Pass != os.Getenv("AdminPass"){
-		c.JSON(http.StatusForbidden, gin.H{"error" : "Invalid Password."})
+	if info.Pass != os.Getenv("AdminPass") {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid Password."})
 		return
 	}
 
@@ -47,14 +45,13 @@ func AdminLogin(c *gin.Context) {
 		Secure:   false, // Set this to true if you're using HTTPS, false for HTTP
 		SameSite: http.SameSiteStrictMode,
 	}
-	
+
 	http.SetCookie(c.Writer, cookie)
 	c.JSON(http.StatusOK, gin.H{"message": "Admin logged in successfully !!"})
 }
 
 func AddNewUser(c *gin.Context) {
 	// TODO: Modify this function to handle multiple concatenated json inputs
-
 
 	// TODO: Implement admin authentication logic
 	// Authenticate the admin here
@@ -67,7 +64,7 @@ func AddNewUser(c *gin.Context) {
 	}
 
 	// Create user
-	for _,user := range info.TypeUserNew {
+	for _, user := range info.TypeUserNew {
 
 		newUser := models.User{
 			Id:      user.Id,
@@ -75,7 +72,6 @@ func AddNewUser(c *gin.Context) {
 			Email:   user.Email,
 			Gender:  user.Gender,
 			Pass:    user.PassHash,
-			PrivK:   "",
 			PubK:    "",
 			AuthC:   utils.RandStringRunes(15),
 			Data:    "",
@@ -83,9 +79,9 @@ func AddNewUser(c *gin.Context) {
 			Matches: "",
 			Dirty:   false,
 		}
-	
+
 		// Insert the user into the database
-	
+
 		if err := Db.Create(&newUser).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return
