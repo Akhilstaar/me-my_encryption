@@ -12,6 +12,8 @@ import (
 	// "github.com/gin-gonic/gin/binding"
 )
 
+var Db db.PuppyDb
+
 func AdminLogin(c *gin.Context) {
 	info := new(models.AdminLogin)
 	if err := c.BindJSON(info); err != nil {
