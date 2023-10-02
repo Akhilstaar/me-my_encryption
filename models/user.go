@@ -23,9 +23,8 @@ type (
 )
 
 type AddNewUser struct {
-	TypeUserNew   []TypeUserNew `json:"newuser" binding:"required"`
+	TypeUserNew []TypeUserNew `json:"newuser" binding:"required"`
 }
-
 
 type TypeUserNew struct {
 	Id       string `json:"roll" binding:"required"`
@@ -54,7 +53,8 @@ type AdminLogin struct {
 	Pass string `json:"pass" binding:"required"`
 }
 
-type mailData struct {
+type MailData struct {
+	Name  string `json:"name" binding:"required"`
 	Email string `json:"email" binding:"required"`
 	AuthC string `json:"authCode" binding:"required"`
 }
